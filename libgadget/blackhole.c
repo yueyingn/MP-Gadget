@@ -63,13 +63,6 @@ typedef struct {
     MyFloat SmoothedEntropy;
     MyFloat GasVel[3];
 
-    /*************************************************************************/
-
-    MyFloat SurroundingVel[3];
-    MyFloat SurroundingDensity;
-    MyFloat SurroundingParticles;
-
-    /*************************************************************************/
 
 } TreeWalkResultBHAccretion;
 
@@ -78,6 +71,35 @@ typedef struct {
     DensityKernel accretion_kernel;
     DensityKernel feedback_kernel;
 } TreeWalkNgbIterBHAccretion;
+
+
+
+/*****************************************************************************/
+typedef struct {
+    TreeWalkQueryBase base;
+    MyFloat Density;
+
+
+    MyIDType ID;
+} TreeWalkQueryBHDynfric;
+
+typedef struct {
+    TreeWalkResultBase base;
+    int Ngb;
+    MyFloat SurroundingVel[3];
+    MyFloat SurroundingDensity;
+    MyFloat SurroundingParticles;
+
+} TreeWalkResultBHDynfric;
+
+typedef struct {
+    TreeWalkNgbIterBase base;
+    DensityKernel df_kernel;
+
+} TreeWalkNgbIterBHDynfric;
+
+/*****************************************************************************/
+
 
 typedef struct {
     TreeWalkQueryBase base;
@@ -90,7 +112,7 @@ typedef struct {
 
     /*************************************************************************/
 
-    MyFloat SurroundingVel[3];  /* Include both DM and Star*/
+    MyFloat SurroundingVel[3];
     MyFloat SurroundingDensity;
     MyFloat SurroundingParticles;
     MyFloat Vel[3];
@@ -114,15 +136,21 @@ typedef struct {
     /*************************************************************************/
 } TreeWalkResultBHFeedback;
 
+
 typedef struct {
     TreeWalkNgbIterBase base;
     DensityKernel feedback_kernel;
-    /*************************************************************************/
 
-    DensityKernel accretion_kernel;
-
-    /*************************************************************************/
 } TreeWalkNgbIterBHFeedback;
+
+
+struct dfdata {
+    double DFRadius;
+    double Left;
+    double Right;
+
+    int Ngb;
+};
 
 struct BHPriv {
     /* Temporary array to store the IDs of the swallowing black hole for gas.
@@ -142,6 +170,10 @@ struct BHPriv {
 
     MyFloat * BH_DFAllMass;
     MyFloat * BH_DFFracMass;
+
+    struct dfdata * DFdata;
+    size_t * NPLeft;
+    int** NPRedo;
 
     /*************************************************************************/
 
@@ -235,6 +267,9 @@ void set_blackhole_params(ParameterSet * ps)
     MPI_Bcast(&blackhole_params, sizeof(struct BlackholeParams), MPI_BYTE, 0, MPI_COMM_WORLD);
 }
 
+
+
+
 /* accretion routines */
 static void
 blackhole_accretion_postprocess(int n, TreeWalk * tw);
@@ -257,6 +292,36 @@ blackhole_accretion_ngbiter(TreeWalkQueryBHAccretion * I,
         TreeWalkResultBHAccretion * O,
         TreeWalkNgbIterBHAccretion * iter,
         LocalTreeWalk * lv);
+
+
+/*************************************************************************************/
+/* DF routines */
+static void
+blackhole_dynfric_postprocess(int n, TreeWalk * tw);
+
+static int
+blackhole_dynfric_haswork(int n, TreeWalk * tw);
+
+static void
+blackhole_dynfric_reduce(int place, TreeWalkResultBHDynfric * remote, enum TreeWalkReduceMode mode, TreeWalk * tw);
+
+static void
+blackhole_dynfric_copy(int place, TreeWalkQueryBHDynfric * I, TreeWalk * tw);
+
+/* Initializes the minimum potentials*/
+static void
+blackhole_dynfric_preprocess(int n, TreeWalk * tw);
+
+static void
+blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
+        TreeWalkResultBHDynfric * O,
+        TreeWalkNgbIterBHDynfric * iter,
+        LocalTreeWalk * lv);
+
+/*************************************************************************************/
+
+
+
 
 /* feedback routines */
 
@@ -419,6 +484,20 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     tw_accretion->tree = tree;
     tw_accretion->priv = priv;
 
+    tw_dynfric->ev_label = "BH_DYNFRIC";
+    tw_dynfric->visit = (TreeWalkVisitFunction) treewalk_visit_ngbiter;
+    tw_dynfric->ngbiter_type_elsize = sizeof(TreeWalkNgbIterBHDynfric);
+    tw_dynfric->ngbiter = (TreeWalkNgbIterFunction) blackhole_dynfric_ngbiter;
+    tw_dynfric->haswork = blackhole_dynfric_haswork;
+    tw_dynfric->postprocess = (TreeWalkProcessFunction) blackhole_dynfric_postprocess;
+    tw_dynfric->preprocess = (TreeWalkProcessFunction) blackhole_dynfric_preprocess;
+    tw_dynfric->fill = (TreeWalkFillQueryFunction) blackhole_dynfric_copy;
+    tw_dynfric->reduce = (TreeWalkReduceResultFunction) blackhole_dynfric_reduce;
+    tw_dynfric->query_type_elsize = sizeof(TreeWalkQueryBHDynfric);
+    tw_dynfric->result_type_elsize = sizeof(TreeWalkResultBHDynfric);
+    tw_dynfric->tree = tree;
+    tw_dynfric->priv = priv;
+
     TreeWalk tw_feedback[1] = {{0}};
     tw_feedback->ev_label = "BH_FEEDBACK";
     tw_feedback->visit = (TreeWalkVisitFunction) treewalk_visit_ngbiter;
@@ -451,16 +530,104 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     priv->BH_SurroundingGasVel = (MyFloat (*) [3]) mymalloc("BH_SurroundVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingGasVel[0]));
 
 
-    /*************************************************************************/
+    
+
+    /* This allocates memory*/
+    treewalk_run(tw_accretion, act->ActiveParticle, act->NumActiveParticle);
+
+
+
+    /**************************************************************************************/
+    MPIU_Barrier(MPI_COMM_WORLD);
+    message(0, "Beginning dynamical friction computations.\n");
 
     priv->BH_SurroundingVel = (MyFloat (*) [3]) mymalloc("BH_SurroundingVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingVel[0]));
     priv->BH_SurroundingParticles = mymalloc("BH_SurroundingParticles", SlotsManager->info[5].size * sizeof(priv->BH_SurroundingParticles));
     priv->BH_SurroundingDensity = mymalloc("BH_SurroundingDensity", SlotsManager->info[5].size * sizeof(priv->BH_SurroundingDensity));
 
-    /*************************************************************************/
 
-    /* This allocates memory*/
-    treewalk_run(tw_accretion, act->ActiveParticle, act->NumActiveParticle);
+    /* Borrowed from wind.c */
+
+    int64_t totalleft = 0;
+    sumup_large_ints(1, &SlotsManager->info[5].size, &totalleft);
+    priv->NPLeft = ta_malloc("NPLeft", size_t, NumThreads);
+    priv->NPRedo = ta_malloc("NPRedo", int *, NumThreads);
+    priv->DFdata = (struct dfdata * ) mymalloc("DFExtraData", SlotsManager->info[5].size * sizeof(struct dfdata));
+
+    int i;
+    /*Initialise the WINDP array*/
+    #pragma omp parallel for
+    for(i = 0; i < SlotsManager->info[5].size; i++) {
+        int n = NewStars[i];
+        WINDP(n, priv->Winddata).DMRadius = 2 * P[n].Hsml;
+        WINDP(n, priv->Winddata).Left = 0;
+        WINDP(n, priv->Winddata).Right = -1;
+    }
+
+    int alloc_high = 0;
+    int * ReDoQueue = NewStars;
+    int size = NumNewStars;
+    int iter=0;
+
+    /* we will repeat the whole thing for those particles where we didn't find enough neighbours */
+    do {
+        int * CurQueue = ReDoQueue;
+        /* The ReDoQueue swaps between high and low allocations so we can have two allocated alternately*/
+        if(!alloc_high) {
+            ReDoQueue = (int *) mymalloc2("redoqueue", size * sizeof(int) * NumThreads);
+            alloc_high = 1;
+        }
+        else {
+            ReDoQueue = (int *) mymalloc("redoqueue", size * sizeof(int) * NumThreads);
+            alloc_high = 0;
+        }
+        gadget_setup_thread_arrays(ReDoQueue, BH_GET_PRIV(tw)->NPRedo, BH_GET_PRIV(tw)->NPLeft, size, NumThreads);
+
+        treewalk_run(tw_dynfric, CurQueue, size);
+
+        /* Now done with the current queue*/
+        if(iter > 0)
+            myfree(CurQueue);
+
+        /* Set up the next queue*/
+        size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw)->NPRedo, BH_GET_PRIV(tw)->NPLeft, NumThreads);
+
+        sumup_large_ints(1, &size, &totalleft);
+        if(totalleft == 0){
+            myfree(ReDoQueue);
+            break;
+        }
+
+        /*Shrink memory*/
+        ReDoQueue = myrealloc(ReDoQueue, sizeof(int) * size);
+
+        iter++;
+        message(0, "iter=%d star-DM iteration. Total left = %ld\n", iter, totalleft);
+    } while(1);
+
+    ta_free(priv->NPRedo);
+    ta_free(priv->NPLeft);
+
+
+
+    /**************************************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Start swallowing of gas particles and black holes\n");
