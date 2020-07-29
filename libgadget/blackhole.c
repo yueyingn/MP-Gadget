@@ -77,6 +77,7 @@ typedef struct {
     TreeWalkQueryBase base;
     MyFloat Density;
     MyFloat DFRadius;
+    MyFloat Hsml;
 
     MyIDType ID;
 } TreeWalkQueryBHDynfric;
@@ -109,7 +110,7 @@ typedef struct {
 
 
     /*************************************************************************/
-
+    MyFloat DFRadius;
     MyFloat SurroundingVel[3];
     MyFloat SurroundingDensity;
     MyFloat SurroundingParticles;
@@ -661,7 +662,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     const double a3inv = 1./(All.Time * All.Time * All.Time);
     /* This function changes the entropy of the particle due to the BH heating. */
     #pragma omp parallel for
-    for(i = 0; i < PartManager->NumPart; i++)
+    for(int i = 0; i < PartManager->NumPart; i++)
     {
         if(P[i].Type == 0 && priv->Injected_BH_Energy[P[i].PI] > 0)
         {
@@ -946,8 +947,6 @@ blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
 
 
 
-
-
 static void
 blackhole_accretion_preprocess(int n, TreeWalk * tw)
 {
@@ -1221,7 +1220,7 @@ blackhole_feedback_ngbiter(TreeWalkQueryBHFeedback * I,
 
         /**************************************************************/
 
-        density_kernel_init(&iter->accretion_kernel, I->Hsml, GetDensityKernelType());
+        density_kernel_init(&iter->df_kernel, I->DFRadius, GetDensityKernelType());
 
         /**************************************************************/
         density_kernel_init(&iter->feedback_kernel, hsearch, DENSITY_KERNEL_CUBIC_SPLINE);
@@ -1431,7 +1430,9 @@ blackhole_feedback_copy(int i, TreeWalkQueryBHFeedback * I, TreeWalk * tw)
     I->Hsml = P[i].Hsml;
     I->BH_Mass = BHP(i).Mass;
     I->ID = P[i].ID;
+    
     int PI = P[i].PI;
+    I->DFRadius = BH_GET_PRIV(tw)->DFdata[PI].DFRadius
 
     /****************************************************************************************/
     /* Need BH vel for density calculation */
