@@ -458,7 +458,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     sumup_large_ints(1, &SlotsManager->info[5].size, &totbh);
     if(totbh == 0)
         return;
-    int i;
 
     walltime_measure("/Misc");
     TreeWalk tw_accretion[1] = {{0}};
@@ -544,6 +543,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     /**************************************************************************************/
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Beginning dynamical friction computations.\n");
+    int NumThreads = omp_get_max_threads();
 
     priv->BH_SurroundingVel = (MyFloat (*) [3]) mymalloc("BH_SurroundingVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingVel[0]));
     priv->BH_SurroundingParticles = mymalloc("BH_SurroundingParticles", SlotsManager->info[5].size * sizeof(priv->BH_SurroundingParticles));
@@ -560,9 +560,9 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     
     /*Initialise the DF data array*/
     /*Need to confirm if this is the correct group of particles to use for this tw!!!*/
-    int i;
+    
     #pragma omp parallel for
-    for(i = 0; i < act->NumActiveParticle; i++) {
+    for(int i = 0; i < act->NumActiveParticle; i++) {
         int n = act->ActiveParticle[i];
         if(P[n].Type != 5 || P[n].IsGarbage)
             continue;
@@ -588,7 +588,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             ReDoQueue = (int *) mymalloc("redoqueue", size * sizeof(int) * NumThreads);
             alloc_high = 0;
         }
-        gadget_setup_thread_arrays(ReDoQueue, BH_GET_PRIV(tw)->NPRedo, BH_GET_PRIV(tw)->NPLeft, size, NumThreads);
+        gadget_setup_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, size, NumThreads);
 
         /* Run TreeWalk */
         treewalk_run(tw_dynfric, CurQueue, size);
@@ -598,7 +598,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             myfree(CurQueue);
 
         /* Set up the next queue */
-        size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw)->NPRedo, BH_GET_PRIV(tw)->NPLeft, NumThreads);
+        size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, NumThreads);
 
         sumup_large_ints(1, &size, &totalleft);
         if(totalleft == 0){
@@ -835,7 +835,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
     /* Kernel Search */
     int done = 0;
     if(P[n].Type != 5)
-        endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", i, P[n].Type, P[n].ID);
+        endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
     int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
     if(diff < -2) {
@@ -861,7 +861,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
     if(done) {
            /* normalize velocity */
         if(BH_GET_PRIV(tw)->BH_SurroundingDensity[PI] > 0){
-            for(k = 0; k < 3; k++)
+            for(int k = 0; k < 3; k++)
                 BH_GET_PRIV(tw)->BH_SurroundingVel[PI][k] /= BH_GET_PRIV(tw)->BH_SurroundingDensity[PI];
         }
     } 
@@ -891,7 +891,6 @@ blackhole_dynfric_reduce(int place, TreeWalkResultBHDynfric * remote, enum TreeW
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][0], remote->SurroundingVel[0]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][1], remote->SurroundingVel[1]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][2], remote->SurroundingVel[2]);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingRmsVel[PI], remote->SurroundingRmsVel);
 
 }
 
@@ -912,33 +911,32 @@ blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
 
    if(iter->base.other == -1) {
         iter->base.mask = 1 + 2 + 4 + 8 + 16; /* No BH */
-        double hsearch = DMAX(I->Hsml, I->DMRadius);
+        double hsearch = DMAX(I->Hsml, I->DFRadius);
         iter->base.Hsml = hsearch;
         iter->base.symmetric = NGB_TREEFIND_ASYMMETRIC;
-        density_kernel_init(&iter->dynfric_kernel, hsearch, GetDensityKernelType());
+        density_kernel_init(&iter->df_kernel, hsearch, GetDensityKernelType());
         return;
     }
 
     int other = iter->base.other;
     double r = iter->base.r;
-    double r2 = iter->base.r2;
+    // double r2 = iter->base.r2;
 
     /* Collect Star/+DM/+Gas density/velocity for DF computation */
 
     if(P[other].Type == 4 || (P[other].Type == 1 && blackhole_params.BH_DynFrictionMethod > 1) || 
         (P[other].Type == 0 && blackhole_params.BH_DynFrictionMethod == 3) ){
 
-        if(r > I->DMRadius) return;
+        if(r > I->DFRadius) return;
         O->Ngb ++;
-        double u = r * iter->dynfric_kernel.Hinv;
-        double wk = density_kernel_wk(&iter->dynfric_kernel, u);
+        double u = r * iter->df_kernel.Hinv;
+        double wk = density_kernel_wk(&iter->df_kernel, u);
         float mass_j = P[other].Mass;
 
         O->SurroundingParticles += 1;
         O->SurroundingDensity += (mass_j * wk);
         for (int k = 0; k < 3; k++){
             O->SurroundingVel[k] += (mass_j * wk * P[other].Vel[k]);
-            O->SurroundingRmsVel += (mass_j * wk * pow(P[other].Vel[k], 2));
         }
     }
 }
@@ -1118,26 +1116,6 @@ blackhole_accretion_ngbiter(TreeWalkQueryBHAccretion * I,
         } while(!__atomic_compare_exchange_n(&(BHP(other).SwallowID), &readid, newswallowid, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED));
     }
 
-
-    /*************************************************************************/
-
-    /* Collect Star/+DM/+Gas density/velocity for DF computation */
-    if(P[other].Type == 4 || (P[other].Type == 1 && blackhole_params.BH_DynFrictionMethod > 1) || 
-        (P[other].Type == 0 && blackhole_params.BH_DynFrictionMethod == 3) ){
-        if(r2 < iter->accretion_kernel.HH) {
-            double u = r * iter->accretion_kernel.Hinv;
-            double wk = density_kernel_wk(&iter->accretion_kernel, u);
-            float mass_j = P[other].Mass;
-
-            O->SurroundingParticles += 1;
-            O->SurroundingDensity += (mass_j * wk);
-            O->SurroundingVel[0] += (mass_j * wk * P[other].Vel[0]);
-            O->SurroundingVel[1] += (mass_j * wk * P[other].Vel[1]);
-            O->SurroundingVel[2] += (mass_j * wk * P[other].Vel[2]);
-        }
-
-    }
-    /*************************************************************************/
 
 
 
