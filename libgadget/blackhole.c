@@ -139,6 +139,7 @@ typedef struct {
 typedef struct {
     TreeWalkNgbIterBase base;
     DensityKernel feedback_kernel;
+    DensityKernel df_kernel;
 
 } TreeWalkNgbIterBHFeedback;
 
@@ -456,6 +457,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         return;
     /* Do nothing if no black holes*/
     int64_t totbh;
+    int i;
     sumup_large_ints(1, &SlotsManager->info[5].size, &totbh);
     if(totbh == 0)
         return;
@@ -1244,7 +1246,7 @@ blackhole_feedback_ngbiter(TreeWalkQueryBHFeedback * I,
      if(P[other].Type == 4 || (P[other].Type == 1 && blackhole_params.BH_DynFrictionMethod > 1) || 
         (P[other].Type == 0 && blackhole_params.BH_DynFrictionMethod == 3) )
      {
-        if(r2 < iter->accretion_kernel.HH)
+        if(r2 < iter->df_kernel.HH)
         {
              /* Compute fractional mass based on velocity criterion */
             int k;
@@ -1387,16 +1389,6 @@ blackhole_accretion_reduce(int place, TreeWalkResultBHAccretion * remote, enum T
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_FeedbackWeightSum[PI], remote->FeedbackWeightSum);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_Entropy[PI], remote->SmoothedEntropy);
 
-    /****************************************************************************************/
-
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingDensity[PI], remote->SurroundingDensity);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingParticles[PI], remote->SurroundingParticles);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][0], remote->SurroundingVel[0]);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][1], remote->SurroundingVel[1]);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][2], remote->SurroundingVel[2]);
-
-    /****************************************************************************************/
-
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingGasVel[PI][0], remote->GasVel[0]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingGasVel[PI][1], remote->GasVel[1]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingGasVel[PI][2], remote->GasVel[2]);
@@ -1432,7 +1424,7 @@ blackhole_feedback_copy(int i, TreeWalkQueryBHFeedback * I, TreeWalk * tw)
     I->ID = P[i].ID;
     
     int PI = P[i].PI;
-    I->DFRadius = BH_GET_PRIV(tw)->DFdata[PI].DFRadius
+    I->DFRadius = BH_GET_PRIV(tw)->DFdata[PI].DFRadius;
 
     /****************************************************************************************/
     /* Need BH vel for density calculation */
