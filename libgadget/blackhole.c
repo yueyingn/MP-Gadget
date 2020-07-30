@@ -568,6 +568,9 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     #pragma omp parallel for
     for(int i = 0; i < act->NumActiveParticle; i++) {
         int n = act->ActiveParticle[i];
+        if (i <= 20){
+            message(0,"Flag %d, %d\n",i,n);
+        }
         if(P[n].Type != 5 || P[n].IsGarbage)
             continue;
         priv->DFdata[P[n].PI].DFRadius = 2 * P[n].Hsml;
