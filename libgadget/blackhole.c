@@ -559,7 +559,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     sumup_large_ints(1, &SlotsManager->info[5].size, &totalleft);
     priv->NPLeft = ta_malloc("NPLeft", size_t, NumThreads);
     priv->NPRedo = ta_malloc("NPRedo", int *, NumThreads);
-    message(0,'FLAG 0\n');
+    message(0,"FLAG 0\n");
 
     
     /*Initialise the DF data array*/
@@ -574,7 +574,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         priv->DFdata[P[n].PI].Left = 0;
         priv->DFdata[P[n].PI].Right = -1;
     }
-    message(0,'FLAG 1\n');
+    message(0,"FLAG 1\n");
 
     int alloc_high = 0;
     int * ReDoQueue = act->ActiveParticle;
@@ -586,7 +586,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         int * CurQueue = ReDoQueue;
         /* The ReDoQueue swaps between high and low allocations so we can have two allocated alternately*/
 
-        message(0,'FLAG 2\n');
+        message(0,"FLAG 2\n");
         if(!alloc_high) {
             ReDoQueue = (int *) mymalloc2("redoqueue", size * sizeof(int) * NumThreads);
             alloc_high = 1;
@@ -596,9 +596,9 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             alloc_high = 0;
         }
 
-        message(0,'FLAG 3\n');
+        message(0,"FLAG 3\n");
         gadget_setup_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, size, NumThreads);
-        message(0,'FLAG 4\n');
+        message(0,"FLAG 4\n");
         /* Run TreeWalk */
         treewalk_run(tw_dynfric, CurQueue, size);
 
