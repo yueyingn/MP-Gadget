@@ -419,7 +419,7 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
 
         info.BH_DFAllMass = priv->BH_DFAllMass[PI];
         info.BH_DFFracMass = priv->BH_DFFracMass[PI];
-        message(0, "NumPart within DF kernel =%d\n", priv->BH_SurroundingParticles[PI]);
+    
 
         /****************************************************************************/
 
@@ -543,8 +543,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
 
 
-
-
     /**************************************************************************************/
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Beginning dynamical friction computations.\n");
@@ -608,6 +606,13 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         message(0,"FLAG 4\n");
         /* Run TreeWalk */
         treewalk_run(tw_dynfric, CurQueue, size);
+        #pragma omp parallel for
+        for(i = 0; i < act->NumActiveParticle; i++) {
+            int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
+            if(P[n].Type != 5 || P[n].IsGarbage)
+                continue;
+            message(0," Numpart in Kernel = %d\n",priv->BH_SurroundingParticles[P[n].PI]);
+        }
 
         /* Now done with the current queue*/
         if(iter > 0)
