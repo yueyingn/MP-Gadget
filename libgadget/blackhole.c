@@ -616,7 +616,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         message(0, "DF kernel iter=%d star-DM iteration. Total left = %ld\n", iter, totalleft);
     } while(1);
 
-    
     ta_free(priv->NPRedo);
     ta_free(priv->NPLeft);
 
@@ -867,12 +866,15 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
             for(int k = 0; k < 3; k++)
                 BH_GET_PRIV(tw)->BH_SurroundingVel[PI][k] /= BH_GET_PRIV(tw)->BH_SurroundingDensity[PI];
         }
+            message(0, "Done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
+
     } 
     else {
         /* More work needed: add this particle to the redo queue*/
         int tid = omp_get_thread_num();
         BH_GET_PRIV(tw)->NPRedo[tid][BH_GET_PRIV(tw)->NPLeft[tid]] = n;
         BH_GET_PRIV(tw)->NPLeft[tid] ++;
+        message(0, "Not done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
     }
 
 }
