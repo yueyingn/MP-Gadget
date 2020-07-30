@@ -419,6 +419,7 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
 
         info.BH_DFAllMass = priv->BH_DFAllMass[PI];
         info.BH_DFFracMass = priv->BH_DFFracMass[PI];
+        message(0, "NumPart within DF kernel =%d\n", priv->BH_SurroundingParticles[PI]);
 
         /****************************************************************************/
 
@@ -566,8 +567,8 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     /*Need to confirm if this is the correct group of particles to use for this tw!!!*/
     #pragma omp parallel for
     for(i = 0; i < act->NumActiveParticle; i++) {
-        if (i <= 20){
-            message(0,"Flag\n");
+        if (i <= 2){
+            message(0,"NumAct = %ld\n",act->NumActiveParticle);
         }
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
 
