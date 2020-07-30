@@ -853,10 +853,13 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
 
     /* Kernel Search */
     int done = 0;
+    message(0,"In the post-process function \n");
     if(P[n].Type != 5)
         endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
     int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
+    message(0,"Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
+
     if(diff < -2) {
         /* too few */
         BH_GET_PRIV(tw)->DFdata[PI].Left = BH_GET_PRIV(tw)->DFdata[PI].DFRadius;
@@ -932,7 +935,7 @@ blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
         LocalTreeWalk * lv){
 
    if(iter->base.other == -1) {
-        iter->base.mask = 1 + 2 + 4 + 8 + 16; /* No BH */
+        iter->base.mask = 1 + 2 + 4 + 8 + 16 + 32;
         double hsearch = DMAX(I->Hsml, I->DFRadius);
         iter->base.Hsml = hsearch;
         iter->base.symmetric = NGB_TREEFIND_ASYMMETRIC;
