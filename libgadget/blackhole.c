@@ -564,7 +564,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     
     /*Initialise the DF data array*/
     /*Need to confirm if this is the correct group of particles to use for this tw!!!*/
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for(i = 0; i < act->NumActiveParticle; i++) {
         if (i <= 20){
             message(0,"Flag\n");
