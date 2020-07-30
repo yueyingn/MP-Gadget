@@ -569,7 +569,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         if (i <= 20){
             message(0,"Flag\n");
         }
-        int n = act->ActiveParticle ? ActiveParticle[i] : i;
+        int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
 
         if (i <= 20){
             message(0,"Flag %d, %d\n",i,n);
