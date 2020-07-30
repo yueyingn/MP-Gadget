@@ -570,7 +570,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         }
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
 
-        if (i <= 20){
+        if (P[n].Type == 5){
             message(0,"Flag %d, %d\n",i,n);
         }
         if(P[n].Type != 5 || P[n].IsGarbage)
@@ -601,9 +601,8 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             alloc_high = 0;
         }
 
-        message(0,"FLAG 3\n");
         gadget_setup_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, size, NumThreads);
-        message(0,"FLAG 4\n");
+
         /* Run TreeWalk */
         treewalk_run(tw_dynfric, CurQueue, size);
         #pragma omp parallel for
