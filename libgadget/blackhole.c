@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
 #include <math.h>
 #include <gsl/gsl_math.h>
 
@@ -559,13 +560,13 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     sumup_large_ints(1, &SlotsManager->info[5].size, &totalleft);
     priv->NPLeft = ta_malloc("NPLeft", size_t, NumThreads);
     priv->NPRedo = ta_malloc("NPRedo", int *, NumThreads);
-    message(0,"FLAG 0\n");
 
     
     /*Initialise the DF data array*/
     /*Need to confirm if this is the correct group of particles to use for this tw!!!*/
     
     #pragma omp parallel for
+    message(0,"FLAG 01\n");
     for(int i = 0; i < act->NumActiveParticle; i++) {
         int n = act->ActiveParticle[i];
         if(P[n].Type != 5 || P[n].IsGarbage)
