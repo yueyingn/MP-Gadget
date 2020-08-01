@@ -546,6 +546,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     /**************************************************************************************/
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Beginning dynamical friction computations.\n");
+    message(0,"NumAct = %ld",act->NumActiveParticle);
     int NumThreads = omp_get_max_threads();
 
     priv->BH_SurroundingVel = (MyFloat (*) [3]) mymalloc("BH_SurroundingVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingVel[0]));
@@ -567,7 +568,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     for(i = 0; i < act->NumActiveParticle; i++) {
         
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
-        if (i <= 30){
+        if (i > act->NumActiveParticle-30){
             message(0,"NumAct = %ld, n=%d, Type=%d\n",act->NumActiveParticle,n,P[n].Type);
         }
         if (P[n].Type == 5){
