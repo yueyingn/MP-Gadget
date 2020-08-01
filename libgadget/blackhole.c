@@ -887,7 +887,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
             for(int k = 0; k < 3; k++)
                 BH_GET_PRIV(tw)->BH_SurroundingVel[PI][k] /= BH_GET_PRIV(tw)->BH_SurroundingDensity[PI];
         }
-            message(0, "Done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
+            printf("Done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
 
     } 
     else {
@@ -895,7 +895,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
         int tid = omp_get_thread_num();
         BH_GET_PRIV(tw)->NPRedo[tid][BH_GET_PRIV(tw)->NPLeft[tid]] = n;
         BH_GET_PRIV(tw)->NPLeft[tid] ++;
-        message(0, "Not done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
+        printf("Not done, SurroundingParticles = %d \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
     }
 
 }
