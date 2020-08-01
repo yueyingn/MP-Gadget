@@ -382,7 +382,9 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
 
         if(P[p_i].Type != 5 || P[p_i].IsGarbage || P[p_i].Mass <= 0)
           continue;
-
+        if (P[p_i].Type == 5){
+            message(0,"i=%d, n=%d, numact=%ld\n",i,p_i,NumActiveParticle);
+        }
         int PI = P[p_i].PI;
 
         struct BHinfo info = {0};
@@ -546,7 +548,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     /**************************************************************************************/
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Beginning dynamical friction computations.\n");
-    message(0,"NumAct = %ld",act->NumActiveParticle);
+    message(0,"NumAct = %ld.\n",act->NumActiveParticle);
     int NumThreads = omp_get_max_threads();
 
     priv->BH_SurroundingVel = (MyFloat (*) [3]) mymalloc("BH_SurroundingVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingVel[0]));
