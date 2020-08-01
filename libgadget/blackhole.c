@@ -379,6 +379,9 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
     for(i = 0; i < NumActiveParticle; i++)
     {
         int p_i = ActiveParticle ? ActiveParticle[i] : i;
+        if (i<=10){
+            message(0,"collect: i=%d, n=%d, type=%d\n",i,p_i,P[p_i].Type);
+        }
 
         if(P[p_i].Type != 5 || P[p_i].IsGarbage || P[p_i].Mass <= 0)
           continue;
