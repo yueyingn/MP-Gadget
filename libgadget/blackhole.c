@@ -610,6 +610,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             if(P[n].Type != 5 || P[n].IsGarbage)
                 continue;
             printf(" Radius = %f\n",priv->DFdata[P[n].PI].DFRadius);
+            printf(" Ngb = %d\n",priv->DFdata[PI].Ngb);
             printf(" Numpart in Kernel = %d\n",priv->BH_SurroundingParticles[P[n].PI]);
         }
 
