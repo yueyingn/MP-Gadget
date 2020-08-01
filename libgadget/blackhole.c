@@ -609,7 +609,8 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
             if(P[n].Type != 5 || P[n].IsGarbage)
                 continue;
-            message(0," Numpart in Kernel = %d\n",priv->BH_SurroundingParticles[P[n].PI]);
+            printf(" Radius = %d\n",priv->DFdata[P[n].PI].DFRadius);
+            printf(" Numpart in Kernel = %d\n",priv->BH_SurroundingParticles[P[n].PI]);
         }
 
         /* Now done with the current queue*/
