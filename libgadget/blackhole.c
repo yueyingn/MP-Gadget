@@ -565,11 +565,11 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     /*Need to confirm if this is the correct group of particles to use for this tw!!!*/
     #pragma omp parallel for
     for(i = 0; i < act->NumActiveParticle; i++) {
-        if (i <= 2){
-            message(0,"NumAct = %ld\n",act->NumActiveParticle);
-        }
+        
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
-
+        if (i <= 30){
+            message(0,"NumAct = %ld, n=%d, Type=%d\n",act->NumActiveParticle,n,P[n].Type);
+        }
         if (P[n].Type == 5){
             message(0,"Flag %d, %d\n",i,n);
         }
