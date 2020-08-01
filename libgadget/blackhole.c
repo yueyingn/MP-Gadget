@@ -379,14 +379,11 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
     for(i = 0; i < NumActiveParticle; i++)
     {
         int p_i = ActiveParticle ? ActiveParticle[i] : i;
-        if (i<=10){
-            message(0,"collect: i=%d, n=%d, type=%d\n",i,p_i,P[p_i].Type);
-        }
-
         if(P[p_i].Type != 5 || P[p_i].IsGarbage || P[p_i].Mass <= 0)
           continue;
+
         
-        message(0,"collect: i=%d, n=%d, type=%d\n",i,p_i,P[p_i].Type);
+        printf("collect: i=%d, n=%d, type=%d\n",i,p_i,P[p_i].Type);
         int PI = P[p_i].PI;
 
         struct BHinfo info = {0};
@@ -572,11 +569,8 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     for(i = 0; i < act->NumActiveParticle; i++) {
         
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
-        if (i > act->NumActiveParticle-30){
-            message(0,"NumAct = %ld, n=%d, Type=%d\n",act->NumActiveParticle,n,P[n].Type);
-        }
         if (P[n].Type == 5){
-            message(0,"Flag %d, %d\n",i,n);
+            printf("Kerflag %d, %d\n",i,n);
         }
         if(P[n].Type != 5 || P[n].IsGarbage)
             continue;
