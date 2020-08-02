@@ -88,7 +88,6 @@ typedef struct {
     int Ngb;
     MyFloat SurroundingVel[3];
     MyFloat SurroundingDensity;
-    MyFloat SurroundingParticles;
 
 } TreeWalkResultBHDynfric;
 
@@ -114,7 +113,6 @@ typedef struct {
     MyFloat DFRadius;
     MyFloat SurroundingVel[3];
     MyFloat SurroundingDensity;
-    MyFloat SurroundingParticles;
     MyFloat Vel[3];
     MyFloat Mass;
 
@@ -165,7 +163,6 @@ struct BHPriv {
     /* Temporaries computed in the accretion treewalk and used
      * in the feedback treewalk*/
     MyFloat * BH_SurroundingDensity;
-    MyFloat * BH_SurroundingParticles;
     MyFloat (*BH_SurroundingVel)[3];
 
     MyFloat * BH_DFAllMass;
@@ -223,8 +220,10 @@ struct BHinfo{
     /**************************************************************/
     double Pos[3];
     MyFloat BH_SurroundingDensity; 
-    MyFloat BH_SurroundingParticles;
+    int BH_SurroundingParticles;
     MyFloat BH_SurroundingVel[3]; 
+    MyFloat BH_Vel[3]; 
+
 
     MyFloat BH_DFAllMass; 
     MyFloat BH_DFFracMass; 
@@ -232,6 +231,7 @@ struct BHinfo{
     double BH_DFAccel[3]; // changed to fractional acc
     double BH_DragAccel[3];
     double BH_GravAccel[3];
+
     /**************************************************************/
 
     MyDouble a;
@@ -407,13 +407,14 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
             info.BH_DragAccel[k] = BHP(p_i).DragAccel[k];
             info.BH_GravAccel[k] = P[p_i].GravAccel[k];
             info.Pos[k] = P[p_i].Pos[k] - PartManager->CurrentParticleOffset[k];
+            info.BH_Vel[k] = P[p_i].Vel[k]
             info.BH_DFAccel[k] = BHP(p_i).DFAccel[k];
         }
 
         /****************************************************************************/
         /* Output some DF info for debugging */
         info.BH_SurroundingDensity = priv->BH_SurroundingDensity[PI];
-        info.BH_SurroundingParticles = priv->BH_SurroundingParticles[PI];
+        info.BH_SurroundingParticles = priv->DFdata[PI].Ngb;
         info.BH_SurroundingVel[0] = priv->BH_SurroundingVel[PI][0];
         info.BH_SurroundingVel[1] = priv->BH_SurroundingVel[PI][1];
         info.BH_SurroundingVel[2] = priv->BH_SurroundingVel[PI][2];
@@ -551,7 +552,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     int NumThreads = omp_get_max_threads();
 
     priv->BH_SurroundingVel = (MyFloat (*) [3]) mymalloc("BH_SurroundingVel", 3* SlotsManager->info[5].size * sizeof(priv->BH_SurroundingVel[0]));
-    priv->BH_SurroundingParticles = mymalloc("BH_SurroundingParticles", SlotsManager->info[5].size * sizeof(priv->BH_SurroundingParticles));
     priv->BH_SurroundingDensity = mymalloc("BH_SurroundingDensity", SlotsManager->info[5].size * sizeof(priv->BH_SurroundingDensity));
     priv->DFdata = (struct dfdata * ) mymalloc("DFExtraData", SlotsManager->info[5].size * sizeof(struct dfdata));
 
@@ -611,7 +611,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
                 continue;
             printf(" Radius = %f\n",priv->DFdata[P[n].PI].DFRadius);
             printf(" Ngb = %d\n",priv->DFdata[P[n].PI].Ngb);
-            printf(" Numpart in Kernel = %f\n",priv->BH_SurroundingParticles[P[n].PI]);
         }
 
         /* Now done with the current queue*/
@@ -620,7 +619,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
         /* Set up the next queue */
         size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, NumThreads);
-
+        printf(" size = %d, NPLeft = %d \n",size,BH_GET_PRIV(tw_dynfric)->NPLeft);
         sumup_large_ints(1, &size, &totalleft);
         if(totalleft == 0){
             myfree(ReDoQueue);
@@ -708,7 +707,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     myfree(priv->BH_DFAllMass);
     myfree(priv->DFdata);
     myfree(priv->BH_SurroundingDensity);
-    myfree(priv->BH_SurroundingParticles);
     myfree(priv->BH_SurroundingVel);
 
     /*****************************************************************/
@@ -887,7 +885,6 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
             for(int k = 0; k < 3; k++)
                 BH_GET_PRIV(tw)->BH_SurroundingVel[PI][k] /= BH_GET_PRIV(tw)->BH_SurroundingDensity[PI];
         }
-            printf("Done, SurroundingParticles = %f \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
 
     } 
     else {
@@ -895,7 +892,6 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
         int tid = omp_get_thread_num();
         BH_GET_PRIV(tw)->NPRedo[tid][BH_GET_PRIV(tw)->NPLeft[tid]] = n;
         BH_GET_PRIV(tw)->NPLeft[tid] ++;
-        printf("Not done, SurroundingParticles = %f \n",BH_GET_PRIV(tw)->BH_SurroundingParticles[PI]);
     }
 
 }
@@ -913,7 +909,6 @@ blackhole_dynfric_reduce(int place, TreeWalkResultBHDynfric * remote, enum TreeW
 
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->DFdata[PI].Ngb, remote->Ngb);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingDensity[PI], remote->SurroundingDensity);
-    TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingParticles[PI], remote->SurroundingParticles);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][0], remote->SurroundingVel[0]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][1], remote->SurroundingVel[1]);
     TREEWALK_REDUCE(BH_GET_PRIV(tw)->BH_SurroundingVel[PI][2], remote->SurroundingVel[2]);
@@ -936,7 +931,7 @@ blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
         LocalTreeWalk * lv){
 
    if(iter->base.other == -1) {
-        iter->base.mask = 1 + 2 + 4 + 8 + 16 + 32;
+        iter->base.mask = 1 + 2 + 16; // Gas/DM/Star
         double hsearch = DMAX(I->Hsml, I->DFRadius);
         iter->base.Hsml = hsearch;
         iter->base.symmetric = NGB_TREEFIND_ASYMMETRIC;
@@ -959,7 +954,7 @@ blackhole_dynfric_ngbiter(TreeWalkQueryBHDynfric * I,
         double wk = density_kernel_wk(&iter->df_kernel, u);
         float mass_j = P[other].Mass;
 
-        O->SurroundingParticles += 1;
+
         O->SurroundingDensity += (mass_j * wk);
         for (int k = 0; k < 3; k++){
             O->SurroundingVel[k] += (mass_j * wk * P[other].Vel[k]);
