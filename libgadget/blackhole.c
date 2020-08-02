@@ -407,7 +407,7 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
             info.BH_DragAccel[k] = BHP(p_i).DragAccel[k];
             info.BH_GravAccel[k] = P[p_i].GravAccel[k];
             info.Pos[k] = P[p_i].Pos[k] - PartManager->CurrentParticleOffset[k];
-            info.BH_Vel[k] = P[p_i].Vel[k]
+            info.BH_Vel[k] = P[p_i].Vel[k];
             info.BH_DFAccel[k] = BHP(p_i).DFAccel[k];
         }
 
@@ -619,7 +619,7 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
         /* Set up the next queue */
         size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, NumThreads);
-        printf(" size = %d, NPLeft = %d \n",size,BH_GET_PRIV(tw_dynfric)->NPLeft);
+        printf(" size = %d\n",size);
         sumup_large_ints(1, &size, &totalleft);
         if(totalleft == 0){
             myfree(ReDoQueue);
