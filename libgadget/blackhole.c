@@ -845,12 +845,11 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
 
     /* Kernel Search */
     int done = 0;
-    endrun(23, "Inside the postprocess function");
     if(P[n].Type != 5)
         endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
     int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
-    printf("Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
+    // printf("Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
 
     if(diff < -2) {
         /* too few */
