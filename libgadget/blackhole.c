@@ -844,7 +844,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
     if(P[n].Type != 5)
         endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
-    int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
+    int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - blackhole_params.BH_DFKernel;
 
     if(diff < -2) {
         /* too few */
