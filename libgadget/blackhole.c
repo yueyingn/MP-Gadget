@@ -36,6 +36,7 @@ struct BlackholeParams
 
     int BH_DynFrictionMethod;/*0 for off; 1 for Star Only; 2 for DM+Star; 3 for DM+Star+Gas */
     int BH_DFBoostFactor; /*Optional boost factor for DF*/
+    int BH_DFKernel; /* Numer of Ngb for DF computation */
     int BH_DRAG; /*Hydro drag force*/
 
 } blackhole_params;
@@ -258,6 +259,7 @@ void set_blackhole_params(ParameterSet * ps)
 
         blackhole_params.BH_DynFrictionMethod = param_get_int(ps, "BH_DynFrictionMethod");
         blackhole_params.BH_DFBoostFactor = param_get_int(ps, "BH_DFBoostFactor");
+        blackhole_params.BH_DFKernel = param_get_int(ps, "BH_DFKernel");
         blackhole_params.BH_DRAG = param_get_int(ps, "BH_DRAG");
 
 
