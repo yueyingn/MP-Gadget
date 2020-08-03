@@ -612,7 +612,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
         /* Set up the next queue */
         size = gadget_compact_thread_arrays(ReDoQueue, BH_GET_PRIV(tw_dynfric)->NPRedo, BH_GET_PRIV(tw_dynfric)->NPLeft, NumThreads);
-        printf(" size = %d\n",size);
         sumup_large_ints(1, &size, &totalleft);
         if(totalleft == 0){
             myfree(ReDoQueue);
@@ -631,7 +630,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
 
     /**************************************************************************************/
-
 
 
 
@@ -849,7 +847,6 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
         endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
     int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
-    // printf("Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
 
     if(diff < -2) {
         /* too few */
