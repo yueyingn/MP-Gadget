@@ -1251,7 +1251,7 @@ blackhole_feedback_ngbiter(TreeWalkQueryBHFeedback * I,
      if(P[other].Type == 4 || (P[other].Type == 1 && blackhole_params.BH_DynFrictionMethod > 1) || 
         (P[other].Type == 0 && blackhole_params.BH_DynFrictionMethod == 3) )
      {
-        if(r2 < iter->df_kernel.HH)
+        if(r < I->DFRadius)
         {
              /* Compute fractional mass based on velocity criterion */
             int k;
