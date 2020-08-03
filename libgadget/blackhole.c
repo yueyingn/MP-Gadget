@@ -541,8 +541,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
 
 
 
-
-
     /**************************************************************************************/
     MPIU_Barrier(MPI_COMM_WORLD);
     message(0, "Beginning dynamical friction computations.\n");
@@ -602,8 +600,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
             int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
             if(P[n].Type != 5 || P[n].IsGarbage)
                 continue;
-            printf(" Radius = %f\n",priv->DFdata[P[n].PI].DFRadius);
-            printf(" Ngb = %d\n",priv->DFdata[P[n].PI].Ngb);
         }
 
         /* Now done with the current queue*/
