@@ -382,8 +382,6 @@ collect_BH_info(int * ActiveParticle,int NumActiveParticle, struct BHPriv *priv,
         if(P[p_i].Type != 5 || P[p_i].IsGarbage || P[p_i].Mass <= 0)
           continue;
 
-        
-        printf("collect: i=%d, n=%d, type=%d\n",i,p_i,P[p_i].Type);
         int PI = P[p_i].PI;
 
         struct BHinfo info = {0};
@@ -569,16 +567,12 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
     for(i = 0; i < act->NumActiveParticle; i++) {
         
         int n = act->ActiveParticle ? act->ActiveParticle[i] : i;
-        if (P[n].Type == 5){
-            printf("Kerflag %d, %d\n",i,n);
-        }
         if(P[n].Type != 5 || P[n].IsGarbage)
             continue;
         priv->DFdata[P[n].PI].DFRadius = 2 * P[n].Hsml;
         priv->DFdata[P[n].PI].Left = 0;
         priv->DFdata[P[n].PI].Right = -1;
     }
-    message(0,"FLAG 1\n");
 
     int alloc_high = 0;
     int * ReDoQueue = act->ActiveParticle;
@@ -590,7 +584,6 @@ blackhole(const ActiveParticles * act, ForceTree * tree, FILE * FdBlackHoles, FI
         int * CurQueue = ReDoQueue;
         /* The ReDoQueue swaps between high and low allocations so we can have two allocated alternately*/
 
-        message(0,"FLAG 2\n");
         if(!alloc_high) {
             ReDoQueue = (int *) mymalloc2("redoqueue", size * sizeof(int) * NumThreads);
             alloc_high = 1;
@@ -823,7 +816,7 @@ blackhole_accretion_postprocess(int i, TreeWalk * tw)
     BHP(i).Mass += BHP(i).Mdot * dtime;
 
     /*************************************************************************/
-    
+    /* Hydro Drag Force */
     if(blackhole_params.BH_DRAG > 0){
         double fac = 0;
         if (blackhole_params.BH_DRAG == 1) fac = BHP(i).Mdot/BHP(i).Mass; 
@@ -852,12 +845,12 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
 
     /* Kernel Search */
     int done = 0;
-    printf("In the post-process function \n");
+    endrun(23, "Inside the postprocess function");
     if(P[n].Type != 5)
         endrun(23, "Dynfric called on something not a bh particle: (i=%d, t=%d, id = %ld)\n", n, P[n].Type, P[n].ID);
 
     int diff = BH_GET_PRIV(tw)->DFdata[PI].Ngb - 100;
-    message(0,"Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
+    printf("Current num neighbours=%d \n",BH_GET_PRIV(tw)->DFdata[PI].Ngb);
 
     if(diff < -2) {
         /* too few */
