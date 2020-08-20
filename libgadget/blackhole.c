@@ -1125,7 +1125,6 @@ blackhole_accretion_ngbiter(TreeWalkQueryBHAccretion * I,
             }
         }
     }
-
 }
 
 
@@ -1355,6 +1354,7 @@ blackhole_feedback_copy(int i, TreeWalkQueryBHFeedback * I, TreeWalk * tw)
 {
     I->Hsml = P[i].Hsml;
     I->BH_Mass = BHP(i).Mass;
+    I->Mass = P[i].Mass;
     I->ID = P[i].ID;
     I->Mtrack = BHP(i).Mtrack;
     int PI = P[i].PI;
