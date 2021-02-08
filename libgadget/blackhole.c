@@ -723,7 +723,7 @@ blackhole_dynfric_postprocess(int n, TreeWalk * tw){
     }
     else
     {
-        message(2, "Density is zero in DF kernel, kernel may be too small.\n");
+        message(2, "Density is zero in DF kernel, kernel may be too small. BHID = %g \n",P[n].ID);
         for(j = 0; j < 3; j++)
         {
             BHP(n).DFAccel[j] = 0;
