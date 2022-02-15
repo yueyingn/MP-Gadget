@@ -1005,7 +1005,8 @@ blackhole_accretion_ngbiter(TreeWalkQueryBHAccretion * I,
             flag = 1;
         if(blackhole_params.MergeGravBound == 0)
             flag = 1;
-        if(blackhole_params.MergeGravBound == 1){
+        /* We only apply GravBound check when reposition is off, to avoid BHs being repositioned to the same location but unmerged */
+        if(blackhole_params.MergeGravBound == 1 && blackhole_params.BlackHoleRepositionEnabled == 0){ 
 
             double dx[3];
             double dv[3];
