@@ -223,6 +223,7 @@ create_gadget_parameter_set()
     param_declare_double(ps,"BHKE_EddingtonMIndex",OPTIONAL, 2, "Powlaw index for mbh-dependent Eddington threshold for the kinetic feedback");
     param_declare_double(ps,"BHKE_EffRhoFactor",OPTIONAL, 0.05, "Factor1 for kinetic feedback efficiency, compare with BH density");
     param_declare_double(ps,"BHKE_EffCap",OPTIONAL, 0.05, "Factor2 for kinetic feedback efficiency, sets the maximum factor that converts accretion energy to kinetic feedback");
+    param_declare_double(ps,"BHKE_EffBoostFac",OPTIONAL, 1.0, "boost factor (AGN1) for the kinetic feedback efficiency");
     param_declare_double(ps,"BHKE_InjEnergyThr",OPTIONAL, 5, "Factor for Minimum KineticFeedbackEnergy injection, controls the burstiness of kinetic feedback");
 
     param_declare_double(ps, "BlackHoleFeedbackRadiusMaxPhys", OPTIONAL, 0, "If set, the physical radius at which the black hole feedback energy is deposited. When both this flag and BlackHoleFeedbackRadius are both set, the smaller radius is used.");

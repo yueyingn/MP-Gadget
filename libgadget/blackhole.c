@@ -39,6 +39,7 @@ struct BlackholeParams
     double BHKE_EddingtonMIndex; /* Powlaw index for mbh-dependent Eddington threshold */
     double BHKE_EffRhoFactor; /* Minimum kinetic feedback efficiency factor scales with BH density*/
     double BHKE_EffCap; /* Cap of the kinetic feedback efficiency factor */
+    double BHKE_EffBoostFac; /* boost factor of kinetic feedback efficiency for testing */
     double BHKE_InjEnergyThr; /*Minimum injection of KineticFeedbackEnergy, controls the burstiness of kinetic feedback*/
     double BHKE_SfrCritOverDensity; /*for KE efficiency calculation, borrow from sfr.params */
     /**********************************************************************/
@@ -277,6 +278,7 @@ void set_blackhole_params(ParameterSet * ps)
         blackhole_params.BHKE_EddingtonMIndex = param_get_double(ps, "BHKE_EddingtonMIndex");
         blackhole_params.BHKE_EffRhoFactor = param_get_double(ps, "BHKE_EffRhoFactor");
         blackhole_params.BHKE_EffCap = param_get_double(ps, "BHKE_EffCap");
+        blackhole_params.BHKE_EffBoostFac = param_get_double(ps, "BHKE_EffBoostFac");
         blackhole_params.BHKE_InjEnergyThr = param_get_double(ps, "BHKE_InjEnergyThr");
         blackhole_params.BHKE_SfrCritOverDensity = param_get_double(ps, "CritOverDensity");
         /***********************************************************************************/
@@ -986,6 +988,8 @@ blackhole_accretion_postprocess(int i, TreeWalk * tw)
             if (epsilon > blackhole_params.BHKE_EffCap){
                 epsilon = blackhole_params.BHKE_EffCap;
             }
+            
+            epsilon *= blackhole_params.BHKE_EffBoostFac;
             
             BHP(i).KineticFdbkEnergy += epsilon * (BHP(i).Mdot * dtime * pow(LIGHTCGS / All.UnitVelocity_in_cm_per_s, 2));
         }
