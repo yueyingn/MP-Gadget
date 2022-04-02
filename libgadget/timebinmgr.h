@@ -12,7 +12,7 @@
  */
 #define TIMEBINS 24
 #define TIMEBASE (1u<<TIMEBINS)
-#define MAXSNAPSHOTS (1u<<(30-TIMEBINS))
+#define MAXSNAPSHOTS (1u<<(32-TIMEBINS))
 
 #include "types.h"
 #include "utils/paramset.h"
