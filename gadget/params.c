@@ -287,8 +287,9 @@ create_gadget_parameter_set()
     param_declare_double(ps, "TempClouds", OPTIONAL, 1000, "Temperature of the cold star forming clouds in K.");
     param_declare_double(ps, "MaxSfrTimescale", OPTIONAL, 1.5, "Maximum star formation time in units of the density threshold.");
     param_declare_int(ps, "Generations", OPTIONAL, 4, "Number of stars to create per gas particle.");
+    param_declare_double(ps, "SofterEQSFactor", OPTIONAL, 1.0, "Factor to make softer equation of state for star forming gas");
+    
     param_declare_enum(ps, "WindModel", WindModelEnum, OPTIONAL, "ofjt10", "Wind model to use. Default is the varying wind velocity model with isotropic winds.");
-
     /* The following two are for VS08 and SH03*/
     param_declare_double(ps, "WindEfficiency", OPTIONAL, 2.0, "Fraction of the stellar mass that goes into a wind. Needs sh03 or vs08 wind models.");
     param_declare_double(ps, "WindEnergyFraction", OPTIONAL, 1.0, "Fraction of the available energy that goes into winds.");

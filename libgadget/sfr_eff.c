@@ -54,6 +54,7 @@ static struct SFRParams
     int BHFeedbackUseTcool;
     /*!< may be used to set a floor for the gas temperature */
     double MinGasTemp;
+    double SofterEQSFactor;
 
     /*Lyman alpha forest specific star formation.*/
     double QuickLymanAlphaProbability;
@@ -127,6 +128,7 @@ void set_sfr_params(ParameterSet * ps)
         sfr_params.CritPhysDensity = param_get_double(ps, "CritPhysDensity");
         sfr_params.PhysDensThreshFactor = param_get_double(ps, "PhysDensThreshFactor");
         sfr_params.WindOn = param_get_int(ps, "WindOn");
+        sfr_params.SofterEQSFactor = param_get_double(ps, "SofterEQSFactor");
 
         sfr_params.FactorSN = param_get_double(ps, "FactorSN");
         sfr_params.FactorEVP = param_get_double(ps, "FactorEVP");
@@ -135,6 +137,7 @@ void set_sfr_params(ParameterSet * ps)
         sfr_params.MaxSfrTimescale = param_get_double(ps, "MaxSfrTimescale");
         sfr_params.Generations = param_get_int(ps, "Generations");
         sfr_params.MinGasTemp = param_get_double(ps, "MinGasTemp");
+        
         sfr_params.BHFeedbackUseTcool = param_get_int(ps, "BHFeedbackUseTcool");
         if(sfr_params.BHFeedbackUseTcool > 2 || sfr_params.BHFeedbackUseTcool < 0)
             endrun(0, "BHFeedbackUseTcool mode %d not supported\n", sfr_params.BHFeedbackUseTcool);
@@ -592,7 +595,7 @@ static int make_particle_star(int child, int parent, int placement, double Time)
 static void
 cooling_relaxed(int i, double dtime, struct UVBG * local_uvbg, const double redshift, const double a3inv, struct sfr_eeqos_data sfr_data, const struct UVBG * const GlobalUVBG)
 {
-    const double egyeff = sfr_params.EgySpecCold * sfr_data.cloudfrac + (1 - sfr_data.cloudfrac) * sfr_data.egyhot;
+    const double egyeff = (sfr_params.EgySpecCold * sfr_data.cloudfrac + (1 - sfr_data.cloudfrac) * sfr_data.egyhot) * sfr_params.SofterEQSFactor;
     const double Density = SPHP(i).Density;
     const double densityfac = pow(Density * a3inv, GAMMA_MINUS1) / GAMMA_MINUS1;
     double egycurrent = SPHP(i).Entropy * densityfac;
@@ -778,7 +781,7 @@ get_egyeff(double redshift, double dens, struct UVBG * uvbg)
 
     double y = tsfr / tcool * egyhot / (sfr_params.FactorSN * sfr_params.EgySpecSN - (1 - sfr_params.FactorSN) * sfr_params.EgySpecCold);
     double x = 1 + 1 / (2 * y) - sqrt(1 / y + 1 / (4 * y * y));
-    return egyhot * (1 - x) + sfr_params.EgySpecCold * x;
+    return (egyhot * (1 - x) + sfr_params.EgySpecCold * x) * sfr_params.SofterEQSFactor;
 }
 
 void init_cooling_and_star_formation(int CoolingOn, int StarformationOn, Cosmology * CP)
