@@ -42,6 +42,7 @@ static struct SFRParams
     double CritPhysDensity;
     double OverDensThresh;
     double PhysDensThresh;
+    double PhysDensThreshFactor;
     double EgySpecSN;
     double FactorSN;
     double EgySpecCold;
@@ -124,6 +125,7 @@ void set_sfr_params(ParameterSet * ps)
         sfr_params.StarformationCriterion = param_get_enum(ps, "StarformationCriterion");
         sfr_params.CritOverDensity = param_get_double(ps, "CritOverDensity");
         sfr_params.CritPhysDensity = param_get_double(ps, "CritPhysDensity");
+        sfr_params.PhysDensThreshFactor = param_get_double(ps, "PhysDensThreshFactor");
         sfr_params.WindOn = param_get_int(ps, "WindOn");
 
         sfr_params.FactorSN = param_get_double(ps, "FactorSN");
@@ -851,10 +853,12 @@ void init_cooling_and_star_formation(int CoolingOn, int StarformationOn, Cosmolo
                     2) * (sfr_params.FactorSN * sfr_params.EgySpecSN - (1 -
                             sfr_params.FactorSN) * sfr_params.EgySpecCold) /
                         (sfr_params.MaxSfrTimescale * coolrate);
-
+        sfr_params.PhysDensThresh *= sfr_params.PhysDensThreshFactor;
+            
         message(0, "A0= %g  \n", sfr_params.FactorEVP);
-        message(0, "Computed: PhysDensThresh= %g  (int units)         %g h^2 cm^-3\n", sfr_params.PhysDensThresh,
+        message(0, "Computed: Star formation PhysDensThresh= %g  (int units)         %g h^2 cm^-3\n", sfr_params.PhysDensThresh,
                 sfr_params.PhysDensThresh / (PROTONMASS / HYDROGEN_MASSFRAC / All.UnitDensity_in_cgs));
+        message(0, "Star formation OverDensThresh = %g (int units)", sfr_params.OverDensThresh);
         message(0, "EXPECTED FRACTION OF COLD GAS AT THRESHOLD = %g\n", x);
         message(0, "tcool=%g dens=%g egyhot=%g\n", tcool, dens, egyhot);
 
