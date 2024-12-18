@@ -197,6 +197,7 @@ create_gadget_parameter_set()
     param_declare_double(ps, "MinMStarForNewSeed", OPTIONAL, 5e-4, "Minimal stellar mass in halo for seeding black holes in internal mass units.");
     param_declare_double(ps, "TimeBetweenSeedingSearch", OPTIONAL, 1.04, "Scale factor fraction increase between Seeding Attempts.");
     param_declare_int(ps, "FdmOn", OPTIONAL, 0, "Apply FDM dynamics to dark matter");
+    param_declare_int(ps, "LyaFake", OPTIONAL, 0, "post-process density field of lya-supersim from Fdm branch, read gas mass from header, avoid omega check, and IO InternalEnergy");
 
     /*Black holes*/
     param_declare_int(ps, "BlackHoleOn", REQUIRED, 1, "Master switch to enable black hole formation and feedback. If this is on, type 5 particles are treated as black holes.");
@@ -329,7 +330,7 @@ create_gadget_parameter_set()
     
     /*Parameters for the FDM model*/
     param_declare_double(ps, "FDM22", OPTIONAL, 2.5, "mass of FDM in unit of 1e-22eV.");
-    param_declare_double(ps, "FDMMaxNgbDeviation", OPTIONAL, 5., "Maximum variance in the number of neighbours of FDM");
+    param_declare_double(ps, "FDMMaxNgbDeviation", OPTIONAL, 2., "Maximum variance in the number of neighbours of FDM");
 
     param_set_action(ps, "BlackHoleFeedbackMethod", BlackHoleFeedbackMethodAction, NULL);
     param_set_action(ps, "StarformationCriterion", StarformationCriterionAction, NULL);

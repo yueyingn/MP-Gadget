@@ -305,6 +305,8 @@ void petaio_read_internal(char * fname, int ic, struct IOTable * IOTable, MPI_Co
             keep |= (0 == strcmp(IOTable->ent[i].name, "Position"));
             keep |= (0 == strcmp(IOTable->ent[i].name, "Velocity"));
             keep |= (0 == strcmp(IOTable->ent[i].name, "ID"));
+            if(All.LyaFake)
+                keep |= (0 == strcmp(IOTable->ent[i].name, "InternalEnergy"));
             if (ptype == 5) {
                 keep |= (0 == strcmp(IOTable->ent[i].name, "Mass"));
                 keep |= (0 == strcmp(IOTable->ent[i].name, "BlackholeMass"));
@@ -868,6 +870,7 @@ SIMPLE_PROPERTY_TYPE_PI(Metals, 4, Metals[0], float, NMETALS, struct star_partic
 SIMPLE_PROPERTY_TYPE_PI(Metals, 0, Metals[0], float, NMETALS, struct sph_particle_data)
 
 SIMPLE_PROPERTY_TYPE_PI(Density, 1, Density, float, 1, struct fdm_particle_data)
+SIMPLE_PROPERTY_TYPE_PI(InternalEnergy, 1, InternalEnergy, float, 1, struct fdm_particle_data)    
 
 SIMPLE_GETTER_PI(GTStarFormationRate, Sfr, float, 1, struct sph_particle_data)
 SIMPLE_PROPERTY_TYPE_PI(StarFormationTime, 5, FormationTime, float, 1, struct bh_particle_data)
@@ -931,20 +934,21 @@ static void GTHeliumIIIFraction(int i, float * out, void * baseptr, void * smanp
     struct sph_particle_data * sl = (struct sph_particle_data *) info->ptr;
     *out = get_helium_neutral_fraction_sfreff(2, redshift, pl, sl+PI);
 }
-static void GTInternalEnergy(int i, float * out, void * baseptr, void * smanptr) {
-    int PI = ((struct particle_data *) baseptr)[i].PI;
-    struct slot_info * info = &(((struct slots_manager_type *) smanptr)->info[0]);
-    struct sph_particle_data * sl = (struct sph_particle_data *) info->ptr;
-    *out = sl[PI].Entropy / GAMMA_MINUS1 * pow(SPH_EOMDensity(&sl[PI]) * All.cf.a3inv, GAMMA_MINUS1);
-}
 
-static void STInternalEnergy(int i, float * out, void * baseptr, void * smanptr) {
-    float u = *out;
-    int PI = ((struct particle_data *) baseptr)[i].PI;
-    struct slot_info * info = &(((struct slots_manager_type *) smanptr)->info[0]);
-    struct sph_particle_data * sl = (struct sph_particle_data *) info->ptr;
-    sl[PI].Entropy  = GAMMA_MINUS1 * u / pow(SPH_EOMDensity(&sl[PI]) * All.cf.a3inv , GAMMA_MINUS1);
-}
+// static void GTInternalEnergy(int i, float * out, void * baseptr, void * smanptr) {
+//     int PI = ((struct particle_data *) baseptr)[i].PI;
+//     struct slot_info * info = &(((struct slots_manager_type *) smanptr)->info[0]);
+//     struct sph_particle_data * sl = (struct sph_particle_data *) info->ptr;
+//     *out = sl[PI].Entropy / GAMMA_MINUS1 * pow(SPH_EOMDensity(&sl[PI]) * All.cf.a3inv, GAMMA_MINUS1);
+// }
+
+// static void STInternalEnergy(int i, float * out, void * baseptr, void * smanptr) {
+//     float u = *out;
+//     int PI = ((struct particle_data *) baseptr)[i].PI;
+//     struct slot_info * info = &(((struct slots_manager_type *) smanptr)->info[0]);
+//     struct sph_particle_data * sl = (struct sph_particle_data *) info->ptr;
+//     sl[PI].Entropy  = GAMMA_MINUS1 * u / pow(SPH_EOMDensity(&sl[PI]) * All.cf.a3inv , GAMMA_MINUS1);
+// }
 
 /* Can't use the macros because cannot take address of a bitfield*/
 static void GTHeIIIIonized(int i, unsigned char * out, void * baseptr, void * smanptr) {
@@ -1017,7 +1021,7 @@ void register_io_blocks(struct IOTable * IOTable, int WriteGroupID) {
     /* On reload this sets the Entropy variable, need the densities.
      * Register this after Density and EgyWtDensity will ensure density is read
      * before this. */
-    IO_REG(InternalEnergy,   "f4", 1, 0, IOTable);
+//     IO_REG(InternalEnergy,"f4", 1, 0, IOTable);
 
     /* Cooling */
     IO_REG(ElectronAbundance,       "f4", 1, 0, IOTable);
@@ -1046,7 +1050,11 @@ void register_io_blocks(struct IOTable * IOTable, int WriteGroupID) {
     if(All.FdmOn){
         IO_REG(SmoothingLength, "f4",1, 1, IOTable);
         IO_REG_TYPE(Density, "f4", 1, 1, IOTable);
+        if(All.LyaFake){
+            IO_REG_TYPE(InternalEnergy, "f4", 1, 1, IOTable);
+        }
     }
+    
     /* Another new addition: save the DelayTime for wind particles*/
     IO_REG_NONFATAL(DelayTime,  "f4", 1, 0, IOTable);
     /* end SF */

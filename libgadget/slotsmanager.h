@@ -115,6 +115,7 @@ struct fdm_particle_data
     MyFloat GradDensity[3];
     MyFloat LapDensity;
     MyFloat QPAccel[3];
+    MyFloat InternalEnergy;
 };
 
 extern struct slots_manager_type {

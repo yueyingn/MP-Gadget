@@ -104,6 +104,7 @@ set_init_params(ParameterSet * ps)
         All.InitGasTemp = param_get_double(ps, "InitGasTemp");
         
         All.FdmOn = param_get_int(ps, "FdmOn");
+        All.LyaFake = param_get_int(ps, "LyaFake");
 
         /*Massive neutrino parameters*/
         All.MassiveNuLinRespOn = param_get_int(ps, "MassiveNuLinRespOn");
@@ -179,8 +180,9 @@ inttime_t init(int RestartSnapNum, DomainDecomp * ddecomp)
     petaio_read_snapshot(RestartSnapNum, MPI_COMM_WORLD);
 
     domain_test_id_uniqueness(PartManager);
-
-    check_omega(get_generations());
+    
+    if (!All.LyaFake)
+        check_omega(get_generations());
 
     check_positions();
 

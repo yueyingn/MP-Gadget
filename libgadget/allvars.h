@@ -81,6 +81,7 @@ extern struct global_data_all_processes
                            which writes a list of particles to a file as they cross a light cone*/
     
     int FdmOn; /* Apply FDM dynamics to DM particles, with an extra quantum pressure term */
+    int LyaFake;
     
     int WriteBlackHoleDetails; /* write BH details every time step*/
 
