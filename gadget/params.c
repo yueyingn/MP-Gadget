@@ -302,7 +302,6 @@ create_gadget_parameter_set()
     param_declare_double(ps, "WindFreeTravelDensFac", OPTIONAL, 0.1, "If the density of the wind particle drops below this factor of the star formation density threshold, the gas will recouple.");
     param_declare_double(ps, "MinWindVelocity", OPTIONAL, 0, "Minimum velocity of the kicked particle in the wind, in internal units (physical km/s).");
     param_declare_double(ps, "WindThermalFactor", OPTIONAL, 0, "Fraction of the wind energy which comes thermally rather than kinetic.");
-
     param_declare_double(ps, "MaxWindFreeTravelTime", OPTIONAL, 60, "Maximum time in Myrs for the wind to be decoupled.");
 
     param_declare_int(ps, "RandomSeed", OPTIONAL, 42, "Random number generator initial seed. Used to form stars.");
@@ -333,6 +332,8 @@ create_gadget_parameter_set()
     param_declare_double(ps, "MetalsSn1aN0", OPTIONAL, 1.3e-3, "Overall rate of SN1a per Msun");
     param_declare_double(ps, "MetalsMaxNgbDeviation", OPTIONAL, 5., "Maximum variance in the number of neighbours metals are returned to.");
     param_declare_int(ps, "MetalsSPHWeighting", OPTIONAL, 1, "If true, return metals to gas with a volume-weighted SPH kernel. If false use a volume-weighted uniform kernel.");
+    param_declare_double(ps, "IMFslope", OPTIONAL, -2.3, "IMF slope for chabrier_imf");
+    param_declare_double(ps, "SnAgbSwitch", OPTIONAL, 8, "Mass in solar at which the yield tables switch from AGB stars to SNII");
 
     /*Parameters for the massive neutrino model*/
     param_declare_int(ps, "MassiveNuLinRespOn", REQUIRED, 0, "Enables linear response massive neutrinos of 1209.0461. Make sure you enable radiation too.");

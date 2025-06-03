@@ -17,6 +17,8 @@
 #include "libgadget/slotsmanager.h"
 #include "libgadget/metal_tables.h"
 
+#define SNAGBSWITCH 8 /* Mass in solar at which the yield tables switch from AGB stars to SNII*/
+
 void test_yields(void ** state)
 {
     gsl_integration_workspace * gsl_work = gsl_integration_workspace_alloc(GSL_WORKSPACE);

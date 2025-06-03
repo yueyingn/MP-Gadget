@@ -49,6 +49,8 @@ static struct metal_return_params
     double Sn1aN0;
     int SPHWeighting;
     double MaxNgbDeviation;
+    double IMFslope;
+    double SnAgbSwitch; /* Mass in solar at which the yield tables switch from AGB stars to SNII*/
 } MetalParams;
 
 /* For tests*/
@@ -67,6 +69,8 @@ set_metal_return_params(ParameterSet * ps)
         MetalParams.Sn1aN0 = param_get_double(ps, "MetalsSn1aN0");
         MetalParams.SPHWeighting = param_get_int(ps, "MetalsSPHWeighting");
         MetalParams.MaxNgbDeviation = param_get_double(ps, "MetalsMaxNgbDeviation");
+        MetalParams.IMFslope = param_get_double(ps, "IMFslope");
+        MetalParams.SnAgbSwitch = param_get_double(ps, "SnAgbSwitch");
     }
     MPI_Bcast(&MetalParams, sizeof(struct metal_return_params), MPI_BYTE, 0, MPI_COMM_WORLD);
 }
@@ -147,7 +151,7 @@ static double chabrier_imf(double mass)
         return 0.852464 / mass * exp(- pow(log(mass / 0.079)/ 0.69, 2)/2);
     }
     else {
-        return 0.237912 * pow(mass, -2.3);
+        return 0.237912 * pow(mass, MetalParams.IMFslope);
     }
 }
 
@@ -345,8 +349,8 @@ double compute_agb_yield(gsl_interp2d * agb_interp, const double * agb_weights, 
     gsl_function ff = {chabrier_imf_integ, &para};
     double agbyield = 0, abserr;
     /* Only return AGB metals for the range of AGB stars*/
-    if (masshigh > SNAGBSWITCH)
-        masshigh = SNAGBSWITCH;
+    if (masshigh > MetalParams.SnAgbSwitch)
+        masshigh = MetalParams.SnAgbSwitch;
     if (masslow < agb_masses[0])
         masslow = agb_masses[0];
     if (stellarmetal > agb_metallicities[AGB_NMET-1])
@@ -373,8 +377,8 @@ double compute_snii_yield(gsl_interp2d * snii_interp, const double * snii_weight
     /* Only return metals for the range of SNII stars.*/
     if (masshigh > snii_masses[SNII_NMASS-1])
         masshigh = snii_masses[SNII_NMASS-1];
-    if (masslow < SNAGBSWITCH)
-        masslow = SNAGBSWITCH;
+    if (masslow < MetalParams.SnAgbSwitch)
+        masslow = MetalParams.SnAgbSwitch;
     if (stellarmetal > snii_metallicities[SNII_NMET-1])
         stellarmetal = snii_metallicities[SNII_NMET-1];
     if (stellarmetal < snii_metallicities[0])

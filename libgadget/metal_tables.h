@@ -9,8 +9,6 @@
 #define MAXMASS 40
 /* Only used for IMF normalisation*/
 #define MINMASS 0.1
-/* Mass in solar at which the yield tables switch from AGB stars to SNII*/
-#define SNAGBSWITCH 8
 /* Metallicity values (in terms of metal yield, not solar metallicity)
  * for the stellar lifetime table. Columns of lifetime.*/
 #define LIFE_NMET 5
